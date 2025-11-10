@@ -20,10 +20,12 @@ import DashboardFiscal from './pages/DashboardFiscal';
 import NuevaSolicitud from './components/solicitudes/NuevaSolicitud';
 import MisSolicitudes from './components/solicitudes/MisSolicitudes';
 import SolicitudesPendientes from './components/solicitudes/SolicitudesPendientes';
+import SolicitudDetalle from './components/solicitudes/SolicitudDetalle';
 
 // Programación
 import CalendarioProgramacion from './components/programacion/CalendarioProgramacion';
 import CalendarioAvanzado from './components/programacion/CalendarioAvanzado';
+import ProgramacionDetalle from './components/programacion/ProgramacionDetalle';
 
 // Agenda
 import MisCitas from './components/agenda/MisCitas';
@@ -118,6 +120,15 @@ function App() {
           }
         />
 
+        <Route
+          path="/solicitudes/:id"
+          element={
+            <ProtectedRoute allowedRoles={[UserRole.FISCAL, UserRole.ASISTENTE_ADMINISTRATIVO, UserRole.ADMIN]}>
+              <SolicitudDetalle />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Rutas de Programación */}
         <Route
           path="/programacion/calendario"
@@ -133,6 +144,15 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={[UserRole.ASISTENTE_ADMINISTRATIVO, UserRole.ADMIN]}>
               <CalendarioAvanzado />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/programacion/:id"
+          element={
+            <ProtectedRoute allowedRoles={[UserRole.ASISTENTE_ADMINISTRATIVO, UserRole.PERITO, UserRole.ADMIN]}>
+              <ProgramacionDetalle />
             </ProtectedRoute>
           }
         />
