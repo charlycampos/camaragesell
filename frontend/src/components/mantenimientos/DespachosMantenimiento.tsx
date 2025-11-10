@@ -1,57 +1,63 @@
 /**
- * CRUD de Sedes - Diseño Moderno 🏛️
+ * CRUD de Despachos Fiscales - Diseño Gubernamental ⚖️
  */
 import { useState, useEffect } from 'react';
 import { Layout } from '../layout/Layout';
-import { sedeService } from '../../services/mantenimiento.service';
-import { Sede } from '../../types';
+import { despachoService } from '../../services/mantenimiento.service';
+import { DespachoFiscal } from '../../types';
 import './MantenimientoModerno.css';
 
-export const SedesMantenimiento = () => {
-  const [sedes, setSedes] = useState<Sede[]>([]);
+export const DespachosMantenimiento = () => {
+  const [despachos, setDespachos] = useState<DespachoFiscal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editingSede, setEditingSede] = useState<Sede | null>(null);
+  const [editingDespacho, setEditingDespacho] = useState<DespachoFiscal | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const [formData, setFormData] = useState({
     nombre: '',
+    distrito: '',
     direccion: '',
     telefono: '',
+    fiscal_titular: '',
     is_active: true,
   });
 
   useEffect(() => {
-    loadSedes();
+    loadDespachos();
   }, []);
 
-  const loadSedes = async () => {
+  const loadDespachos = async () => {
     try {
-      const data = await sedeService.getAll();
-      setSedes(data);
+      const data = await despachoService.getAll();
+      setDespachos(data);
     } catch (err: any) {
-      setError('Error al cargar sedes');
+      setError('Error al cargar despachos');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleOpenModal = (sede?: Sede) => {
-    if (sede) {
-      setEditingSede(sede);
+  const handleOpenModal = (despacho?: DespachoFiscal) => {
+    if (despacho) {
+      setEditingDespacho(despacho);
       setFormData({
-        nombre: sede.nombre,
-        direccion: sede.direccion || '',
-        telefono: sede.telefono || '',
-        is_active: sede.is_active,
+        nombre: despacho.nombre,
+        distrito: despacho.distrito || '',
+        direccion: despacho.direccion || '',
+        telefono: despacho.telefono || '',
+        fiscal_titular: despacho.fiscal_titular || '',
+        is_active: despacho.is_active,
       });
     } else {
-      setEditingSede(null);
+      setEditingDespacho(null);
       setFormData({
         nombre: '',
+        distrito: '',
         direccion: '',
         telefono: '',
+        fiscal_titular: '',
         is_active: true,
       });
     }
@@ -63,31 +69,31 @@ export const SedesMantenimiento = () => {
     setError('');
 
     try {
-      if (editingSede) {
-        await sedeService.update(editingSede.id, formData);
-        setSuccess('✅ Sede actualizada exitosamente');
+      if (editingDespacho) {
+        await despachoService.update(editingDespacho.id, formData);
+        setSuccess('✅ Despacho actualizado exitosamente');
       } else {
-        await sedeService.create(formData);
-        setSuccess('✅ Sede creada exitosamente');
+        await despachoService.create(formData);
+        setSuccess('✅ Despacho creado exitosamente');
       }
       setShowModal(false);
-      await loadSedes();
+      await loadDespachos();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Error al guardar sede');
+      setError(err.response?.data?.detail || 'Error al guardar despacho');
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('⚠️ ¿Estás seguro de eliminar esta sede?')) return;
+    if (!confirm('⚠️ ¿Estás seguro de eliminar este despacho fiscal?')) return;
 
     try {
-      await sedeService.delete(id);
-      setSuccess('✅ Sede eliminada exitosamente');
-      await loadSedes();
+      await despachoService.delete(id);
+      setSuccess('✅ Despacho eliminado exitosamente');
+      await loadDespachos();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Error al eliminar sede');
+      setError(err.response?.data?.detail || 'Error al eliminar despacho');
     }
   };
 
@@ -107,11 +113,11 @@ export const SedesMantenimiento = () => {
         {/* Header Impactante */}
         <div className="header-moderno">
           <div className="header-content">
-            <h1>🏛️ Gestión de Sedes</h1>
-            <p>Administra las sedes del Instituto de Medicina Legal</p>
+            <h1>⚖️ Gestión de Despachos Fiscales</h1>
+            <p>Administra las fiscalías y ministerios públicos</p>
           </div>
           <button className="btn-agregar" onClick={() => handleOpenModal()}>
-            ➕ Nueva Sede
+            ➕ Nuevo Despacho
           </button>
         </div>
 
@@ -127,53 +133,70 @@ export const SedesMantenimiento = () => {
         )}
 
         {/* Grid de Tarjetas */}
-        {sedes.length === 0 ? (
+        {despachos.length === 0 ? (
           <div className="empty-state-moderna">
-            <div className="empty-icon">🏛️</div>
-            <h3>No hay sedes registradas</h3>
-            <p>Comienza agregando tu primera sede</p>
+            <div className="empty-icon">⚖️</div>
+            <h3>No hay despachos registrados</h3>
+            <p>Comienza agregando el primer despacho fiscal</p>
             <button className="btn-agregar" onClick={() => handleOpenModal()}>
-              ➕ Crear Primera Sede
+              ➕ Crear Primer Despacho
             </button>
           </div>
         ) : (
           <div className="cards-grid">
-            {sedes.map((sede) => (
-              <div key={sede.id} className="card-moderna">
-                <div className="card-avatar">🏛️</div>
+            {despachos.map((despacho) => (
+              <div key={despacho.id} className="card-moderna">
+                {/* Icono gubernamental */}
+                <div className="card-avatar">⚖️</div>
 
                 <div className="card-header-moderna">
-                  <h3 className="card-title">{sede.nombre}</h3>
-                  <p className="card-subtitle">Instituto de Medicina Legal</p>
+                  <h3 className="card-title" style={{fontSize: '1.25rem'}}>
+                    {despacho.nombre}
+                  </h3>
+                  {despacho.distrito && (
+                    <p className="card-subtitle">📍 {despacho.distrito}</p>
+                  )}
                 </div>
 
                 <div className="card-body-moderna">
-                  {sede.direccion && (
+                  {despacho.fiscal_titular && (
                     <div className="info-item">
-                      <span className="info-icon">📍</span>
+                      <span className="info-icon">👤</span>
                       <div className="info-content">
-                        <span className="info-label">Dirección</span>
-                        <span className="info-value">{sede.direccion}</span>
+                        <span className="info-label">Fiscal Titular</span>
+                        <span className="info-value">{despacho.fiscal_titular}</span>
                       </div>
                     </div>
                   )}
 
-                  {sede.telefono && (
+                  {despacho.direccion && (
+                    <div className="info-item">
+                      <span className="info-icon">📮</span>
+                      <div className="info-content">
+                        <span className="info-label">Dirección</span>
+                        <span className="info-value" style={{fontSize: '0.9rem'}}>
+                          {despacho.direccion}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {despacho.telefono && (
                     <div className="info-item">
                       <span className="info-icon">📞</span>
                       <div className="info-content">
                         <span className="info-label">Teléfono</span>
-                        <span className="info-value">{sede.telefono}</span>
+                        <span className="info-value">{despacho.telefono}</span>
                       </div>
                     </div>
                   )}
 
                   <div className="info-item">
-                    <span className="info-icon">📋</span>
+                    <span className="info-icon">📍</span>
                     <div className="info-content">
                       <span className="info-label">Estado</span>
-                      <span className={`badge-status ${sede.is_active ? 'activo' : 'inactivo'}`}>
-                        {sede.is_active ? '✓ Activa' : '✕ Inactiva'}
+                      <span className={`badge-status ${despacho.is_active ? 'activo' : 'inactivo'}`}>
+                        {despacho.is_active ? '✓ Activo' : '✕ Inactivo'}
                       </span>
                     </div>
                   </div>
@@ -182,13 +205,13 @@ export const SedesMantenimiento = () => {
                 <div className="card-actions">
                   <button
                     className="btn-icon edit"
-                    onClick={() => handleOpenModal(sede)}
+                    onClick={() => handleOpenModal(despacho)}
                   >
                     ✏️ Editar
                   </button>
                   <button
                     className="btn-icon delete"
-                    onClick={() => handleDelete(sede.id)}
+                    onClick={() => handleDelete(despacho.id)}
                   >
                     🗑️ Eliminar
                   </button>
@@ -203,7 +226,7 @@ export const SedesMantenimiento = () => {
           <div className="modal-overlay-moderna" onClick={() => setShowModal(false)}>
             <div className="modal-content-moderna" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header-moderna">
-                <h3>{editingSede ? '✏️ Editar Sede' : '➕ Nueva Sede'}</h3>
+                <h3>{editingDespacho ? '✏️ Editar Despacho' : '➕ Nuevo Despacho'}</h3>
                 <button onClick={() => setShowModal(false)} className="close-btn-moderna">
                   ✕
                 </button>
@@ -211,30 +234,50 @@ export const SedesMantenimiento = () => {
 
               <form onSubmit={handleSubmit}>
                 <div className="form-group-moderna">
-                  <label>Nombre *</label>
+                  <label>Nombre del Despacho *</label>
                   <input
                     type="text"
                     value={formData.nombre}
                     onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                     required
-                    placeholder="Nombre de la sede"
+                    placeholder="Ej: Primera Fiscalía Provincial Penal de Lima"
+                  />
+                </div>
+
+                <div className="form-group-moderna">
+                  <label>Distrito</label>
+                  <input
+                    type="text"
+                    value={formData.distrito}
+                    onChange={(e) => setFormData({ ...formData, distrito: e.target.value })}
+                    placeholder="Ej: Lima - Cercado"
+                  />
+                </div>
+
+                <div className="form-group-moderna">
+                  <label>Fiscal Titular</label>
+                  <input
+                    type="text"
+                    value={formData.fiscal_titular}
+                    onChange={(e) => setFormData({ ...formData, fiscal_titular: e.target.value })}
+                    placeholder="Nombre del fiscal a cargo"
                   />
                 </div>
 
                 <div className="form-group-moderna">
                   <label>Dirección</label>
-                  <input
-                    type="text"
+                  <textarea
                     value={formData.direccion}
                     onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-                    placeholder="Dirección completa"
+                    rows={2}
+                    placeholder="Dirección completa del despacho"
                   />
                 </div>
 
                 <div className="form-group-moderna">
                   <label>Teléfono</label>
                   <input
-                    type="text"
+                    type="tel"
                     value={formData.telefono}
                     onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
                     placeholder="Teléfono de contacto"
@@ -248,7 +291,7 @@ export const SedesMantenimiento = () => {
                       checked={formData.is_active}
                       onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                     />
-                    Activo
+                    Despacho Activo
                   </label>
                 </div>
 
@@ -259,7 +302,7 @@ export const SedesMantenimiento = () => {
                     Cancelar
                   </button>
                   <button type="submit" className="btn-guardar">
-                    {editingSede ? '💾 Actualizar' : '➕ Crear'}
+                    {editingDespacho ? '💾 Actualizar' : '➕ Crear'}
                   </button>
                 </div>
               </form>
@@ -271,4 +314,4 @@ export const SedesMantenimiento = () => {
   );
 };
 
-export default SedesMantenimiento;
+export default DespachosMantenimiento;

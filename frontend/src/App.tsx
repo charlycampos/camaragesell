@@ -29,6 +29,10 @@ import MisCitas from './components/agenda/MisCitas';
 
 // Mantenimientos
 import SedesMantenimiento from './components/mantenimientos/SedesMantenimiento';
+import SalasMantenimiento from './components/mantenimientos/SalasMantenimiento';
+import PeritosMantenimiento from './components/mantenimientos/PeritosMantenimiento';
+import DespachosMantenimiento from './components/mantenimientos/DespachosMantenimiento';
+import UsuariosMantenimiento from './components/mantenimientos/UsuariosMantenimiento';
 
 // Reportes
 import Reportes from './components/reportes/Reportes';
@@ -139,6 +143,42 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
               <SedesMantenimiento />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/mantenimientos/salas"
+          element={
+            <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+              <SalasMantenimiento />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/mantenimientos/peritos"
+          element={
+            <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+              <PeritosMantenimiento />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/mantenimientos/despachos"
+          element={
+            <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+              <DespachosMantenimiento />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/usuarios"
+          element={
+            <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+              <UsuariosMantenimiento />
             </ProtectedRoute>
           }
         />
