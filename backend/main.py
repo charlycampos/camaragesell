@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.core.database import create_db_and_tables
-from app.api.endpoints import auth, solicitudes, programaciones, sedes, salas, peritos, despachos, reportes, usuarios
+from app.api.endpoints import auth, solicitudes, programaciones, sedes, salas, peritos, despachos, reportes, usuarios, estadisticas
 
 
 @asynccontextmanager
@@ -91,6 +91,12 @@ app.include_router(
     usuarios.router,
     prefix=f"{settings.API_V1_STR}/usuarios",
     tags=["usuarios"]
+)
+
+app.include_router(
+    estadisticas.router,
+    prefix=f"{settings.API_V1_STR}/estadisticas",
+    tags=["estadisticas"]
 )
 
 
