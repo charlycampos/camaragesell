@@ -72,6 +72,31 @@ export const solicitudService = {
     const response = await api.put<Solicitud>(`/api/v1/solicitudes/${id}`, data);
     return response.data;
   },
+
+  /**
+   * Búsqueda avanzada con filtros y paginación
+   */
+  async searchAdvanced(params: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    estado?: string;
+    despacho_fiscal_id?: number;
+    tipo_diligencia?: string;
+    fecha_desde?: string;
+    fecha_hasta?: string;
+    sort_by?: string;
+    sort_order?: string;
+  }): Promise<{
+    items: SolicitudEnriched[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+  }> {
+    const response = await api.get('/api/v1/solicitudes/search/advanced', { params });
+    return response.data;
+  },
 };
 
 export default solicitudService;

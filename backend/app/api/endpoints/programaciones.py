@@ -4,7 +4,7 @@ Router de Programaciones
 from typing import Annotated, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from ...core.database import get_session
 from ...models.programacion import Programacion, EstadoProgramacion
@@ -435,3 +435,125 @@ async def validar_programacion(
         errors=errors,
         warnings=[]
     )
+
+
+# ========== ENDPOINT DE BÚSQUEDA Y FILTROS AVANZADOS ==========
+
+@router.get("/search/advanced", response_model=dict)
+async def search_programaciones_advanced(
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    # Paginación
+    page: int = 1,
+    page_size: int = 10,
+    # Búsqueda
+    search: str | None = None,
+    # Filtros
+    estado: EstadoProgramacion | None = None,
+    perito_id: int | None = None,
+    sala_id: int | None = None,
+    fecha_desde: str | None = None,
+    fecha_hasta: str | None = None,
+    # Ordenamiento
+    sort_by: str = "fecha_hora",
+    sort_order: str = "desc"
+):
+    """
+    Búsqueda avanzada de programaciones con filtros múltiples, paginación y ordenamiento
+    
+    Parámetros:
+    - page: Número de página (1-indexed)
+    - page_size: Cantidad de resultados por página
+    - search: Búsqueda en número de caso
+    - estado: Filtrar por estado
+    - perito_id: Filtrar por perito
+    - sala_id: Filtrar por sala
+    - fecha_desde: Fecha de inicio (YYYY-MM-DD)
+    - fecha_hasta: Fecha de fin (YYYY-MM-DD)
+    - sort_by: Campo para ordenar
+    - sort_order: Orden (asc/desc)
+    
+    Retorna:
+    - items: Lista de programaciones enriquecidas
+    - total: Total de resultados
+    - page: Página actual
+    - page_size: Tamaño de página
+    - total_pages: Total de páginas
+    """
+    from sqlmodel import or_, and_, func, col
+    
+    # Construir query base
+    statement = select(Programacion)
+    
+    # Control de acceso por rol
+    if current_user.role == UserRole.PERITO:
+        # Obtener el perito asociado al usuario
+        perito = session.exec(
+            select(Perito).where(Perito.user_id == current_user.id)
+        ).first()
+        if perito:
+            statement = statement.where(Programacion.perito_id == perito.id)
+    
+    # Aplicar búsqueda por número de caso en la solicitud relacionada
+    if search:
+        search_pattern = f"%{search}%"
+        statement = statement.join(Solicitud).where(
+            Solicitud.numero_caso.ilike(search_pattern)
+        )
+    
+    # Aplicar filtros
+    if estado:
+        statement = statement.where(Programacion.estado == estado)
+    
+    if perito_id:
+        statement = statement.where(Programacion.perito_id == perito_id)
+    
+    if sala_id:
+        statement = statement.where(Programacion.sala_id == sala_id)
+    
+    if fecha_desde:
+        try:
+            fecha_desde_dt = datetime.strptime(fecha_desde, "%Y-%m-%d")
+            statement = statement.where(Programacion.fecha_hora >= fecha_desde_dt)
+        except ValueError:
+            pass
+    
+    if fecha_hasta:
+        try:
+            fecha_hasta_dt = datetime.strptime(fecha_hasta, "%Y-%m-%d") + timedelta(days=1)
+            statement = statement.where(Programacion.fecha_hora < fecha_hasta_dt)
+        except ValueError:
+            pass
+    
+    # Contar total de resultados (antes de paginación)
+    count_statement = select(func.count()).select_from(statement.subquery())
+    total = session.exec(count_statement).one()
+    
+    # Aplicar ordenamiento
+    if sort_order.lower() == "desc":
+        statement = statement.order_by(col(getattr(Programacion, sort_by)).desc())
+    else:
+        statement = statement.order_by(col(getattr(Programacion, sort_by)).asc())
+    
+    # Aplicar paginación
+    offset = (page - 1) * page_size
+    statement = statement.offset(offset).limit(page_size)
+    
+    # Ejecutar query
+    programaciones = session.exec(statement).all()
+    
+    # Construir respuestas enriquecidas
+    enriched_items = []
+    for programacion in programaciones:
+        enriched_items.append(build_programacion_enriched(programacion, session))
+    
+    # Calcular total de páginas
+    total_pages = (total + page_size - 1) // page_size
+    
+    return {
+        "items": enriched_items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages
+    }
