@@ -30,6 +30,7 @@ from ...schemas.enriched import (
     UsuarioSimple
 )
 from ...api.deps.auth import get_current_active_user
+from ...core.validators import ProgramacionValidator
 
 router = APIRouter()
 
@@ -97,6 +98,24 @@ async def create_programacion(
             detail="Solicitud must be in pending state"
         )
 
+    # VALIDAR PROGRAMACIÓN
+    validator = ProgramacionValidator(session)
+    is_valid, errors = validator.validate_programacion(
+        fecha_hora=programacion_data.fecha_hora,
+        duracion_minutos=programacion_data.duracion_minutos,
+        sala_id=programacion_data.sala_id,
+        perito_id=programacion_data.perito_id
+    )
+
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "message": "Error de validación",
+                "errors": errors
+            }
+        )
+
     # Crear la programación
     programacion = Programacion(
         **programacion_data.model_dump(),
@@ -136,6 +155,34 @@ async def update_programacion(
                        if k in allowed_fields}
     else:
         update_data = programacion_data.model_dump(exclude_unset=True)
+
+        # VALIDAR si se están actualizando campos críticos
+        fields_criticos = {'fecha_hora', 'duracion_minutos', 'sala_id', 'perito_id'}
+        if any(field in update_data for field in fields_criticos):
+            # Obtener valores actuales o nuevos
+            nueva_fecha = update_data.get('fecha_hora', programacion.fecha_hora)
+            nueva_duracion = update_data.get('duracion_minutos', programacion.duracion_minutos)
+            nueva_sala = update_data.get('sala_id', programacion.sala_id)
+            nuevo_perito = update_data.get('perito_id', programacion.perito_id)
+
+            # Validar la nueva configuración
+            validator = ProgramacionValidator(session)
+            is_valid, errors = validator.validate_programacion(
+                fecha_hora=nueva_fecha,
+                duracion_minutos=nueva_duracion,
+                sala_id=nueva_sala,
+                perito_id=nuevo_perito,
+                programacion_id=programacion_id  # Excluir esta programación de validaciones
+            )
+
+            if not is_valid:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "message": "Error de validación",
+                        "errors": errors
+                    }
+                )
 
     for key, value in update_data.items():
         setattr(programacion, key, value)
@@ -337,3 +384,54 @@ async def get_mis_citas_enriched(
         enriched_list.append(build_programacion_enriched(programacion, session))
 
     return enriched_list
+
+# ========== ENDPOINT DE VALIDACIÓN ==========
+
+from pydantic import BaseModel as PydanticBaseModel
+
+class ValidacionRequest(PydanticBaseModel):
+    """Request para validar una programación antes de crearla"""
+    fecha_hora: datetime
+    duracion_minutos: int
+    sala_id: int
+    perito_id: int
+    programacion_id: Optional[int] = None  # Para excluir en caso de edición
+
+
+class ValidacionResponse(PydanticBaseModel):
+    """Response de validación"""
+    is_valid: bool
+    errors: List[str]
+    warnings: List[str] = []
+
+
+@router.post("/validar", response_model=ValidacionResponse)
+async def validar_programacion(
+    validacion_data: ValidacionRequest,
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User, Depends(get_current_active_user)]
+):
+    """
+    Valida una programación sin crearla
+    Útil para validación en tiempo real en el frontend
+    """
+    if current_user.role not in [UserRole.ADMIN, UserRole.ASISTENTE_ADMINISTRATIVO]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrative assistants can validate appointments"
+        )
+
+    validator = ProgramacionValidator(session)
+    is_valid, errors = validator.validate_programacion(
+        fecha_hora=validacion_data.fecha_hora,
+        duracion_minutos=validacion_data.duracion_minutos,
+        sala_id=validacion_data.sala_id,
+        perito_id=validacion_data.perito_id,
+        programacion_id=validacion_data.programacion_id
+    )
+
+    return ValidacionResponse(
+        is_valid=is_valid,
+        errors=errors,
+        warnings=[]
+    )

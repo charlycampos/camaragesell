@@ -75,6 +75,25 @@ export const programacionService = {
     );
     return response.data;
   },
+
+  /**
+   * Valida una programación antes de crearla/actualizarla
+   * Retorna errores y advertencias sin guardar
+   */
+  async validar(data: {
+    fecha_hora: string;
+    duracion_minutos: number;
+    sala_id: number;
+    perito_id: number;
+    programacion_id?: number;
+  }): Promise<{
+    is_valid: boolean;
+    errors: string[];
+    warnings: string[];
+  }> {
+    const response = await api.post('/api/v1/programaciones/validar', data);
+    return response.data;
+  },
 };
 
 export default programacionService;
