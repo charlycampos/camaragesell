@@ -1,10 +1,12 @@
 /**
- * CRUD de Peritos - Tarjetas de Perfil Profesional 👨‍⚕️
+ * CRUD de Peritos - Tabla con Búsqueda y Paginación 👨‍⚕️
  */
 import { useState, useEffect } from 'react';
 import { Layout } from '../layout/Layout';
 import { peritoService } from '../../services/mantenimiento.service';
 import { Perito } from '../../types';
+import { SearchBar } from '../common/SearchBar';
+import { Pagination } from '../common/Pagination';
 import './MantenimientoModerno.css';
 
 export const PeritosMantenimiento = () => {
@@ -14,6 +16,13 @@ export const PeritosMantenimiento = () => {
   const [editingPerito, setEditingPerito] = useState<Perito | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Estados de búsqueda y paginación
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [formData, setFormData] = useState({
     nombres: '',
@@ -28,17 +37,37 @@ export const PeritosMantenimiento = () => {
 
   useEffect(() => {
     loadPeritos();
-  }, []);
+  }, [searchTerm, currentPage, pageSize]);
 
   const loadPeritos = async () => {
+    setIsLoading(true);
     try {
-      const data = await peritoService.getAll();
-      setPeritos(data);
+      const result = await peritoService.searchAdvanced({
+        page: currentPage,
+        page_size: pageSize,
+        search: searchTerm || undefined,
+        sort_by: 'apellidos',
+        sort_order: 'asc'
+      });
+
+      setPeritos(result.items);
+      setTotalItems(result.total);
+      setTotalPages(result.total_pages);
     } catch (err: any) {
       setError('Error al cargar peritos');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSearch = (search: string) => {
+    setSearchTerm(search);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenModal = (perito?: Perito) => {
@@ -103,11 +132,7 @@ export const PeritosMantenimiento = () => {
     }
   };
 
-  const getInitials = (nombres: string, apellidos: string) => {
-    return `${nombres.charAt(0)}${apellidos.charAt(0)}`.toUpperCase();
-  };
-
-  if (isLoading) {
+  if (isLoading && peritos.length === 0) {
     return (
       <Layout>
         <div className="loading">
@@ -120,7 +145,7 @@ export const PeritosMantenimiento = () => {
   return (
     <Layout>
       <div className="mantenimiento-moderno">
-        {/* Header Impactante */}
+        {/* Header */}
         <div className="header-moderno">
           <div className="header-content">
             <h1>👨‍⚕️ Gestión de Peritos</h1>
@@ -142,105 +167,118 @@ export const PeritosMantenimiento = () => {
           </div>
         )}
 
-        {/* Grid de Tarjetas de Perfil */}
-        {peritos.length === 0 ? (
-          <div className="empty-state-moderna">
-            <div className="empty-icon">👨‍⚕️</div>
-            <h3>No hay peritos registrados</h3>
-            <p>Comienza agregando tu primer perito</p>
-            <button className="btn-agregar" onClick={() => handleOpenModal()}>
-              ➕ Crear Primer Perito
-            </button>
-          </div>
-        ) : (
-          <div className="cards-grid">
-            {peritos.map((perito) => (
-              <div key={perito.id} className="card-moderna">
-                {/* Avatar con iniciales */}
-                <div className="card-avatar" style={{
-                  fontSize: '2rem',
-                  fontWeight: 'bold',
-                  color: 'white'
-                }}>
-                  {getInitials(perito.nombres, perito.apellidos)}
-                </div>
+        {/* Búsqueda */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <SearchBar
+            placeholder="Buscar por nombres, apellidos, especialidad, colegiatura..."
+            onSearch={handleSearch}
+            initialValue={searchTerm}
+          />
+        </div>
 
-                <div className="card-header-moderna" style={{textAlign: 'center'}}>
-                  <h3 className="card-title">
-                    {perito.nombres} {perito.apellidos}
-                  </h3>
-                  <p className="card-subtitle">
-                    {perito.especialidad || 'Psicólogo Forense'}
-                  </p>
-                </div>
-
-                <div className="card-body-moderna">
-                  {perito.colegiatura && (
-                    <div className="info-item">
-                      <span className="info-icon">🎓</span>
-                      <div className="info-content">
-                        <span className="info-label">Colegiatura</span>
-                        <span className="info-value">{perito.colegiatura}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {perito.telefono && (
-                    <div className="info-item">
-                      <span className="info-icon">📱</span>
-                      <div className="info-content">
-                        <span className="info-label">Teléfono</span>
-                        <span className="info-value">{perito.telefono}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {perito.email && (
-                    <div className="info-item">
-                      <span className="info-icon">✉️</span>
-                      <div className="info-content">
-                        <span className="info-label">Email</span>
-                        <span className="info-value" style={{
-                          fontSize: '0.85rem',
-                          wordBreak: 'break-word'
-                        }}>
-                          {perito.email}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="info-item">
-                    <span className="info-icon">📍</span>
-                    <div className="info-content">
-                      <span className="info-label">Estado</span>
-                      <span className={`badge-status ${perito.is_active ? 'activo' : 'inactivo'}`}>
-                        {perito.is_active ? '✓ Activo' : '✕ Inactivo'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="card-actions">
-                  <button
-                    className="btn-icon edit"
-                    onClick={() => handleOpenModal(perito)}
-                  >
-                    ✏️ Editar
-                  </button>
-                  <button
-                    className="btn-icon delete"
-                    onClick={() => handleDelete(perito.id)}
-                  >
-                    🗑️ Eliminar
-                  </button>
-                </div>
-              </div>
-            ))}
+        {/* Contador de resultados */}
+        {!isLoading && (
+          <div className="results-counter">
+            Mostrando {peritos.length} de {totalItems} peritos
           </div>
         )}
 
-        {/* Modal Moderno */}
+        {/* Tabla */}
+        {peritos.length === 0 ? (
+          <div className="empty-state-moderna">
+            <div className="empty-icon">👨‍⚕️</div>
+            <h3>No se encontraron peritos</h3>
+            <p>{searchTerm ? 'Intenta con otros criterios de búsqueda' : 'Comienza agregando tu primer perito'}</p>
+            <button className="btn-agregar" onClick={() => handleOpenModal()}>
+              ➕ Crear Perito
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Nombre Completo</th>
+                    <th>Especialidad</th>
+                    <th>Colegiatura</th>
+                    <th>Contacto</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {peritos.map((perito) => (
+                    <tr key={perito.id}>
+                      <td>
+                        <strong>{perito.nombres} {perito.apellidos}</strong>
+                      </td>
+                      <td>{perito.especialidad || 'Psicólogo Forense'}</td>
+                      <td>
+                        {perito.colegiatura ? (
+                          <code>{perito.colegiatura}</code>
+                        ) : (
+                          <span style={{ color: '#9ca3af' }}>-</span>
+                        )}
+                      </td>
+                      <td>
+                        <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                          {perito.telefono && <div>📱 {perito.telefono}</div>}
+                          {perito.email && <div>✉️ {perito.email}</div>}
+                          {!perito.telefono && !perito.email && <span style={{ color: '#9ca3af' }}>-</span>}
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`badge-status ${perito.is_active ? 'activo' : 'inactivo'}`}>
+                          {perito.is_active ? '✓ Activo' : '✕ Inactivo'}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button
+                            className="btn-icon edit"
+                            onClick={() => handleOpenModal(perito)}
+                            title="Editar"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="btn-icon delete"
+                            onClick={() => handleDelete(perito.id)}
+                            title="Eliminar"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Paginación */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+            />
+          </>
+        )}
+
+        {/* Loading overlay */}
+        {isLoading && peritos.length > 0 && (
+          <div className="loading-overlay">
+            <div className="spinner-small"></div>
+          </div>
+        )}
+
+        {/* Modal */}
         {showModal && (
           <div className="modal-overlay-moderna" onClick={() => setShowModal(false)}>
             <div className="modal-content-moderna" onClick={(e) => e.stopPropagation()}>
