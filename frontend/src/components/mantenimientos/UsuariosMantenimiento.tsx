@@ -1,10 +1,12 @@
 /**
- * CRUD de Usuarios - Panel de Administración 👥
+ * CRUD de Usuarios - Tabla con Búsqueda y Paginación 👥
  */
 import { useState, useEffect } from 'react';
 import { Layout } from '../layout/Layout';
 import { usuarioService } from '../../services/usuario.service';
 import { User, UserRole } from '../../types';
+import { SearchBar } from '../common/SearchBar';
+import { Pagination } from '../common/Pagination';
 import './MantenimientoModerno.css';
 
 export const UsuariosMantenimiento = () => {
@@ -14,6 +16,14 @@ export const UsuariosMantenimiento = () => {
   const [editingUsuario, setEditingUsuario] = useState<User | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Estados de búsqueda y paginación
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedRole, setSelectedRole] = useState<string>('');
 
   const [formData, setFormData] = useState({
     username: '',
@@ -26,17 +36,43 @@ export const UsuariosMantenimiento = () => {
 
   useEffect(() => {
     loadUsuarios();
-  }, []);
+  }, [searchTerm, currentPage, pageSize, selectedRole]);
 
   const loadUsuarios = async () => {
+    setIsLoading(true);
     try {
-      const data = await usuarioService.getAll();
-      setUsuarios(data);
+      const result = await usuarioService.searchAdvanced({
+        page: currentPage,
+        page_size: pageSize,
+        search: searchTerm || undefined,
+        role: selectedRole || undefined,
+        sort_by: 'created_at',
+        sort_order: 'desc'
+      });
+
+      setUsuarios(result.items);
+      setTotalItems(result.total);
+      setTotalPages(result.total_pages);
     } catch (err: any) {
       setError('Error al cargar usuarios');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSearch = (search: string) => {
+    setSearchTerm(search);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleRoleFilter = (role: string) => {
+    setSelectedRole(role);
+    setCurrentPage(1);
   };
 
   const handleOpenModal = (usuario?: User) => {
@@ -47,7 +83,7 @@ export const UsuariosMantenimiento = () => {
         email: usuario.email,
         full_name: usuario.full_name,
         role: usuario.role,
-        password: '', // No mostramos la contraseña
+        password: '',
         is_active: usuario.is_active,
       });
     } else {
@@ -70,7 +106,6 @@ export const UsuariosMantenimiento = () => {
 
     try {
       if (editingUsuario) {
-        // Al editar, solo enviar contraseña si se proporcionó una nueva
         const updateData: any = {
           email: formData.email,
           full_name: formData.full_name,
@@ -137,22 +172,7 @@ export const UsuariosMantenimiento = () => {
     }
   };
 
-  const getRoleColor = (role: UserRole) => {
-    switch (role) {
-      case UserRole.ADMIN:
-        return 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
-      case UserRole.ASISTENTE_ADMINISTRATIVO:
-        return 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)';
-      case UserRole.PERITO:
-        return 'linear-gradient(135deg, #27ae60 0%, #229954 100%)';
-      case UserRole.FISCAL:
-        return 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)';
-      default:
-        return 'linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%)';
-    }
-  };
-
-  if (isLoading) {
+  if (isLoading && usuarios.length === 0) {
     return (
       <Layout>
         <div className="loading">
@@ -165,7 +185,7 @@ export const UsuariosMantenimiento = () => {
   return (
     <Layout>
       <div className="mantenimiento-moderno">
-        {/* Header Impactante */}
+        {/* Header */}
         <div className="header-moderno">
           <div className="header-content">
             <h1>👥 Gestión de Usuarios</h1>
@@ -187,86 +207,130 @@ export const UsuariosMantenimiento = () => {
           </div>
         )}
 
-        {/* Grid de Tarjetas */}
-        {usuarios.length === 0 ? (
-          <div className="empty-state-moderna">
-            <div className="empty-icon">👥</div>
-            <h3>No hay usuarios registrados</h3>
-            <p>Comienza agregando el primer usuario</p>
-            <button className="btn-agregar" onClick={() => handleOpenModal()}>
-              ➕ Crear Primer Usuario
-            </button>
+        {/* Búsqueda y Filtros */}
+        <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ flex: '1 1 300px' }}>
+            <SearchBar
+              placeholder="Buscar por nombre, usuario o email..."
+              onSearch={handleSearch}
+              initialValue={searchTerm}
+            />
           </div>
-        ) : (
-          <div className="cards-grid">
-            {usuarios.map((usuario) => (
-              <div key={usuario.id} className="card-moderna">
-                {/* Avatar con gradiente según rol */}
-                <div className="card-avatar" style={{
-                  background: getRoleColor(usuario.role),
-                  fontSize: '2.5rem'
-                }}>
-                  {getRoleIcon(usuario.role)}
-                </div>
+          <select
+            value={selectedRole}
+            onChange={(e) => handleRoleFilter(e.target.value)}
+            style={{
+              padding: '0.75rem 1rem',
+              border: '2px solid #e5e7eb',
+              borderRadius: '12px',
+              fontSize: '0.9375rem',
+              backgroundColor: 'white',
+              cursor: 'pointer',
+              minWidth: '200px'
+            }}
+          >
+            <option value="">Todos los roles</option>
+            <option value={UserRole.ADMIN}>👑 Administrador</option>
+            <option value={UserRole.ASISTENTE_ADMINISTRATIVO}>📋 Asistente</option>
+            <option value={UserRole.PERITO}>👨‍⚕️ Perito</option>
+            <option value={UserRole.FISCAL}>⚖️ Fiscal</option>
+          </select>
+        </div>
 
-                <div className="card-header-moderna" style={{textAlign: 'center'}}>
-                  <h3 className="card-title">{usuario.full_name}</h3>
-                  <p className="card-subtitle">@{usuario.username}</p>
-                </div>
-
-                <div className="card-body-moderna">
-                  <div className="info-item">
-                    <span className="info-icon">🎭</span>
-                    <div className="info-content">
-                      <span className="info-label">Rol</span>
-                      <span className="info-value">{getRoleLabel(usuario.role)}</span>
-                    </div>
-                  </div>
-
-                  <div className="info-item">
-                    <span className="info-icon">✉️</span>
-                    <div className="info-content">
-                      <span className="info-label">Email</span>
-                      <span className="info-value" style={{
-                        fontSize: '0.85rem',
-                        wordBreak: 'break-word'
-                      }}>
-                        {usuario.email}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="info-item">
-                    <span className="info-icon">📍</span>
-                    <div className="info-content">
-                      <span className="info-label">Estado</span>
-                      <span className={`badge-status ${usuario.is_active ? 'activo' : 'inactivo'}`}>
-                        {usuario.is_active ? '✓ Activo' : '✕ Inactivo'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="card-actions">
-                  <button
-                    className="btn-icon edit"
-                    onClick={() => handleOpenModal(usuario)}
-                  >
-                    ✏️ Editar
-                  </button>
-                  <button
-                    className="btn-icon delete"
-                    onClick={() => handleDelete(usuario.id)}
-                  >
-                    🗑️ Eliminar
-                  </button>
-                </div>
-              </div>
-            ))}
+        {/* Contador de resultados */}
+        {!isLoading && (
+          <div className="results-counter">
+            Mostrando {usuarios.length} de {totalItems} usuarios
           </div>
         )}
 
-        {/* Modal Moderno */}
+        {/* Tabla */}
+        {usuarios.length === 0 ? (
+          <div className="empty-state-moderna">
+            <div className="empty-icon">👥</div>
+            <h3>No se encontraron usuarios</h3>
+            <p>{searchTerm || selectedRole ? 'Intenta con otros criterios de búsqueda' : 'Comienza agregando el primer usuario'}</p>
+            <button className="btn-agregar" onClick={() => handleOpenModal()}>
+              ➕ Crear Usuario
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Rol</th>
+                    <th>Nombre Completo</th>
+                    <th>Usuario</th>
+                    <th>Email</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usuarios.map((usuario) => (
+                    <tr key={usuario.id}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '1.5rem' }}>{getRoleIcon(usuario.role)}</span>
+                          <span>{getRoleLabel(usuario.role)}</span>
+                        </div>
+                      </td>
+                      <td><strong>{usuario.full_name}</strong></td>
+                      <td><code>@{usuario.username}</code></td>
+                      <td style={{ fontSize: '0.875rem', color: '#6b7280' }}>{usuario.email}</td>
+                      <td>
+                        <span className={`badge-status ${usuario.is_active ? 'activo' : 'inactivo'}`}>
+                          {usuario.is_active ? '✓ Activo' : '✕ Inactivo'}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button
+                            className="btn-icon edit"
+                            onClick={() => handleOpenModal(usuario)}
+                            title="Editar"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="btn-icon delete"
+                            onClick={() => handleDelete(usuario.id)}
+                            title="Eliminar"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Paginación */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+            />
+          </>
+        )}
+
+        {/* Loading overlay */}
+        {isLoading && usuarios.length > 0 && (
+          <div className="loading-overlay">
+            <div className="spinner-small"></div>
+          </div>
+        )}
+
+        {/* Modal */}
         {showModal && (
           <div className="modal-overlay-moderna" onClick={() => setShowModal(false)}>
             <div className="modal-content-moderna" onClick={(e) => e.stopPropagation()}>

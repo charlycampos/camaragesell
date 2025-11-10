@@ -94,3 +94,73 @@ async def delete_sala(
     session.delete(sala)
     session.commit()
     return None
+
+
+@router.get("/search/advanced", response_model=dict)
+async def search_salas_advanced(
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    # Paginación
+    page: int = 1,
+    page_size: int = 10,
+    # Búsqueda
+    search: str | None = None,
+    # Filtros
+    sede_id: int | None = None,
+    is_active: bool | None = None,
+    # Ordenamiento
+    sort_by: str = "nombre",
+    sort_order: str = "asc"
+):
+    """
+    Búsqueda avanzada de salas con filtros múltiples, paginación y ordenamiento
+    """
+    from sqlmodel import or_, and_, func, col
+
+    # Construir query base
+    statement = select(Sala)
+
+    # Aplicar búsqueda
+    if search:
+        search_pattern = f"%{search}%"
+        statement = statement.where(
+            or_(
+                Sala.nombre.ilike(search_pattern),
+                Sala.equipamiento.ilike(search_pattern)
+            )
+        )
+
+    # Aplicar filtros
+    if sede_id:
+        statement = statement.where(Sala.sede_id == sede_id)
+
+    if is_active is not None:
+        statement = statement.where(Sala.is_active == is_active)
+
+    # Contar total de resultados (antes de paginación)
+    count_statement = select(func.count()).select_from(statement.subquery())
+    total = session.exec(count_statement).one()
+
+    # Aplicar ordenamiento
+    if sort_order.lower() == "desc":
+        statement = statement.order_by(col(getattr(Sala, sort_by)).desc())
+    else:
+        statement = statement.order_by(col(getattr(Sala, sort_by)).asc())
+
+    # Aplicar paginación
+    offset = (page - 1) * page_size
+    statement = statement.offset(offset).limit(page_size)
+
+    # Ejecutar query
+    salas = session.exec(statement).all()
+
+    # Calcular total de páginas
+    total_pages = (total + page_size - 1) // page_size
+
+    return {
+        "items": salas,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages
+    }

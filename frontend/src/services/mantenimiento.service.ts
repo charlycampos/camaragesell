@@ -29,6 +29,24 @@ export const sedeService = {
   async delete(id: number): Promise<void> {
     await api.delete(`/api/v1/sedes/${id}`);
   },
+
+  async searchAdvanced(params: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    is_active?: boolean;
+    sort_by?: string;
+    sort_order?: string;
+  }): Promise<{
+    items: Sede[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+  }> {
+    const response = await api.get('/api/v1/sedes/search/advanced', { params });
+    return response.data;
+  }
 };
 
 // Servicio de Salas
@@ -56,6 +74,25 @@ export const salaService = {
   async delete(id: number): Promise<void> {
     await api.delete(`/api/v1/salas/${id}`);
   },
+
+  async searchAdvanced(params: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    sede_id?: number;
+    is_active?: boolean;
+    sort_by?: string;
+    sort_order?: string;
+  }): Promise<{
+    items: Sala[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+  }> {
+    const response = await api.get('/api/v1/salas/search/advanced', { params });
+    return response.data;
+  }
 };
 
 // Servicio de Peritos
@@ -83,6 +120,25 @@ export const peritoService = {
   async delete(id: number): Promise<void> {
     await api.delete(`/api/v1/peritos/${id}`);
   },
+
+  async searchAdvanced(params: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    especialidad?: string;
+    is_active?: boolean;
+    sort_by?: string;
+    sort_order?: string;
+  }): Promise<{
+    items: Perito[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+  }> {
+    const response = await api.get('/api/v1/peritos/search/advanced', { params });
+    return response.data;
+  }
 };
 
 // Servicio de Despachos Fiscales
@@ -110,4 +166,23 @@ export const despachoService = {
   async delete(id: number): Promise<void> {
     await api.delete(`/api/v1/despachos/${id}`);
   },
+
+  async searchAdvanced(params: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    distrito?: string;
+    is_active?: boolean;
+    sort_by?: string;
+    sort_order?: string;
+  }): Promise<{
+    items: DespachoFiscal[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+  }> {
+    const response = await api.get('/api/v1/despachos/search/advanced', { params });
+    return response.data;
+  }
 };

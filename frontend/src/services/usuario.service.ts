@@ -45,6 +45,25 @@ export const usuarioService = {
   async delete(id: number): Promise<void> {
     await api.delete(`/api/v1/usuarios/${id}`);
   },
+
+  async searchAdvanced(params: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    role?: string;
+    is_active?: boolean;
+    sort_by?: string;
+    sort_order?: string;
+  }): Promise<{
+    items: User[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+  }> {
+    const response = await api.get('/api/v1/usuarios/search/advanced', { params });
+    return response.data;
+  }
 };
 
 export default usuarioService;
