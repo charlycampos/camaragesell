@@ -111,6 +111,15 @@ export const SolicitudesPendientes = () => {
 
                 <div className="card-footer">
                   <button
+                    className="btn-secondary btn-small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/solicitudes/${solicitud.id}`);
+                    }}
+                  >
+                    Ver Detalle
+                  </button>
+                  <button
                     className="btn-primary btn-small"
                     onClick={(e) => {
                       e.stopPropagation();

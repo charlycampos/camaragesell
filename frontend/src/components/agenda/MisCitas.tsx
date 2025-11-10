@@ -2,6 +2,7 @@
  * Vista de Mis Citas (Perito)
  */
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '../layout/Layout';
 import { programacionService } from '../../services/programacion.service';
 import { Programacion, EstadoProgramacion, DocumentoCreate } from '../../types';
@@ -9,6 +10,7 @@ import { format, isPast, isFuture } from 'date-fns';
 import './MisCitas.css';
 
 export const MisCitas = () => {
+  const navigate = useNavigate();
   const [citas, setCitas] = useState<Programacion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -165,6 +167,12 @@ export const MisCitas = () => {
                   </div>
 
                   <div className="cita-actions">
+                    <button
+                      className="btn-secondary btn-small"
+                      onClick={() => navigate(`/programacion/${cita.id}`)}
+                    >
+                      Ver Detalle
+                    </button>
                     <select
                       value={cita.estado}
                       onChange={(e) => handleCambiarEstado(cita.id, e.target.value as EstadoProgramacion)}
@@ -213,6 +221,13 @@ export const MisCitas = () => {
                         </span>
                       </td>
                       <td>
+                        <button
+                          className="btn-secondary btn-small"
+                          onClick={() => navigate(`/programacion/${cita.id}`)}
+                          style={{ marginRight: '0.5rem' }}
+                        >
+                          Ver Detalle
+                        </button>
                         {cita.estado === EstadoProgramacion.PROGRAMADA && (
                           <button
                             className="btn-primary btn-small"

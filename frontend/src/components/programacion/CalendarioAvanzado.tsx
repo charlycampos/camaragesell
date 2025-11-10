@@ -412,10 +412,16 @@ export const CalendarioAvanzado = () => {
 
               <div className="modal-footer-calendario">
                 <button
-                  className="btn-editar"
-                  onClick={() => navigate(`/programacion/editar/${selectedProgramacion.id}`)}
+                  className="btn-ver-solicitud"
+                  onClick={() => navigate(`/solicitudes/${selectedProgramacion.solicitud.id}`)}
                 >
-                  ✏️ Editar Programación
+                  📄 Ver Solicitud
+                </button>
+                <button
+                  className="btn-editar"
+                  onClick={() => navigate(`/programacion/${selectedProgramacion.id}`)}
+                >
+                  👁️ Ver Detalle Completo
                 </button>
                 <button className="btn-cerrar" onClick={() => setShowModal(false)}>
                   Cerrar
