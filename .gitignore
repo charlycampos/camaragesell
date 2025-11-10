@@ -1,0 +1,27 @@
+# Base de datos
+*.db
+*.sqlite
+*.sqlite3
+
+# Entornos virtuales
+venv/
+env/
+ENV/
+.venv
+
+# Variables de entorno
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
