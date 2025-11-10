@@ -1,10 +1,12 @@
 /**
- * CRUD de Despachos Fiscales - Diseño Gubernamental ⚖️
+ * CRUD de Despachos Fiscales - Tabla con Búsqueda y Paginación ⚖️
  */
 import { useState, useEffect } from 'react';
 import { Layout } from '../layout/Layout';
 import { despachoService } from '../../services/mantenimiento.service';
 import { DespachoFiscal } from '../../types';
+import { SearchBar } from '../common/SearchBar';
+import { Pagination } from '../common/Pagination';
 import './MantenimientoModerno.css';
 
 export const DespachosMantenimiento = () => {
@@ -14,6 +16,13 @@ export const DespachosMantenimiento = () => {
   const [editingDespacho, setEditingDespacho] = useState<DespachoFiscal | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Estados de búsqueda y paginación
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -26,17 +35,37 @@ export const DespachosMantenimiento = () => {
 
   useEffect(() => {
     loadDespachos();
-  }, []);
+  }, [searchTerm, currentPage, pageSize]);
 
   const loadDespachos = async () => {
+    setIsLoading(true);
     try {
-      const data = await despachoService.getAll();
-      setDespachos(data);
+      const result = await despachoService.searchAdvanced({
+        page: currentPage,
+        page_size: pageSize,
+        search: searchTerm || undefined,
+        sort_by: 'nombre',
+        sort_order: 'asc'
+      });
+
+      setDespachos(result.items);
+      setTotalItems(result.total);
+      setTotalPages(result.total_pages);
     } catch (err: any) {
       setError('Error al cargar despachos');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSearch = (search: string) => {
+    setSearchTerm(search);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenModal = (despacho?: DespachoFiscal) => {
@@ -97,7 +126,7 @@ export const DespachosMantenimiento = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading && despachos.length === 0) {
     return (
       <Layout>
         <div className="loading">
@@ -110,7 +139,7 @@ export const DespachosMantenimiento = () => {
   return (
     <Layout>
       <div className="mantenimiento-moderno">
-        {/* Header Impactante */}
+        {/* Header */}
         <div className="header-moderno">
           <div className="header-content">
             <h1>⚖️ Gestión de Despachos Fiscales</h1>
@@ -132,96 +161,130 @@ export const DespachosMantenimiento = () => {
           </div>
         )}
 
-        {/* Grid de Tarjetas */}
-        {despachos.length === 0 ? (
-          <div className="empty-state-moderna">
-            <div className="empty-icon">⚖️</div>
-            <h3>No hay despachos registrados</h3>
-            <p>Comienza agregando el primer despacho fiscal</p>
-            <button className="btn-agregar" onClick={() => handleOpenModal()}>
-              ➕ Crear Primer Despacho
-            </button>
-          </div>
-        ) : (
-          <div className="cards-grid">
-            {despachos.map((despacho) => (
-              <div key={despacho.id} className="card-moderna">
-                {/* Icono gubernamental */}
-                <div className="card-avatar">⚖️</div>
+        {/* Búsqueda */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <SearchBar
+            placeholder="Buscar por nombre, distrito, fiscal o dirección..."
+            onSearch={handleSearch}
+            initialValue={searchTerm}
+          />
+        </div>
 
-                <div className="card-header-moderna">
-                  <h3 className="card-title" style={{fontSize: '1.25rem'}}>
-                    {despacho.nombre}
-                  </h3>
-                  {despacho.distrito && (
-                    <p className="card-subtitle">📍 {despacho.distrito}</p>
-                  )}
-                </div>
-
-                <div className="card-body-moderna">
-                  {despacho.fiscal_titular && (
-                    <div className="info-item">
-                      <span className="info-icon">👤</span>
-                      <div className="info-content">
-                        <span className="info-label">Fiscal Titular</span>
-                        <span className="info-value">{despacho.fiscal_titular}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {despacho.direccion && (
-                    <div className="info-item">
-                      <span className="info-icon">📮</span>
-                      <div className="info-content">
-                        <span className="info-label">Dirección</span>
-                        <span className="info-value" style={{fontSize: '0.9rem'}}>
-                          {despacho.direccion}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {despacho.telefono && (
-                    <div className="info-item">
-                      <span className="info-icon">📞</span>
-                      <div className="info-content">
-                        <span className="info-label">Teléfono</span>
-                        <span className="info-value">{despacho.telefono}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="info-item">
-                    <span className="info-icon">📍</span>
-                    <div className="info-content">
-                      <span className="info-label">Estado</span>
-                      <span className={`badge-status ${despacho.is_active ? 'activo' : 'inactivo'}`}>
-                        {despacho.is_active ? '✓ Activo' : '✕ Inactivo'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="card-actions">
-                  <button
-                    className="btn-icon edit"
-                    onClick={() => handleOpenModal(despacho)}
-                  >
-                    ✏️ Editar
-                  </button>
-                  <button
-                    className="btn-icon delete"
-                    onClick={() => handleDelete(despacho.id)}
-                  >
-                    🗑️ Eliminar
-                  </button>
-                </div>
-              </div>
-            ))}
+        {/* Contador de resultados */}
+        {!isLoading && (
+          <div className="results-counter">
+            Mostrando {despachos.length} de {totalItems} despachos
           </div>
         )}
 
-        {/* Modal Moderno */}
+        {/* Tabla */}
+        {despachos.length === 0 ? (
+          <div className="empty-state-moderna">
+            <div className="empty-icon">⚖️</div>
+            <h3>No se encontraron despachos</h3>
+            <p>{searchTerm ? 'Intenta con otros criterios de búsqueda' : 'Comienza agregando el primer despacho fiscal'}</p>
+            <button className="btn-agregar" onClick={() => handleOpenModal()}>
+              ➕ Crear Despacho
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Nombre del Despacho</th>
+                    <th>Distrito</th>
+                    <th>Fiscal Titular</th>
+                    <th>Contacto</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {despachos.map((despacho) => (
+                    <tr key={despacho.id}>
+                      <td><strong>{despacho.nombre}</strong></td>
+                      <td>
+                        {despacho.distrito ? (
+                          <span style={{ fontSize: '0.875rem' }}>📍 {despacho.distrito}</span>
+                        ) : (
+                          <span style={{ color: '#9ca3af' }}>-</span>
+                        )}
+                      </td>
+                      <td>
+                        {despacho.fiscal_titular ? (
+                          <span>👤 {despacho.fiscal_titular}</span>
+                        ) : (
+                          <span style={{ color: '#9ca3af' }}>-</span>
+                        )}
+                      </td>
+                      <td>
+                        <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                          {despacho.telefono && <div>📞 {despacho.telefono}</div>}
+                          {despacho.direccion && (
+                            <div title={despacho.direccion}>
+                              📮 {despacho.direccion.length > 30
+                                ? `${despacho.direccion.substring(0, 30)}...`
+                                : despacho.direccion}
+                            </div>
+                          )}
+                          {!despacho.telefono && !despacho.direccion && (
+                            <span style={{ color: '#9ca3af' }}>-</span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`badge-status ${despacho.is_active ? 'activo' : 'inactivo'}`}>
+                          {despacho.is_active ? '✓ Activo' : '✕ Inactivo'}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button
+                            className="btn-icon edit"
+                            onClick={() => handleOpenModal(despacho)}
+                            title="Editar"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="btn-icon delete"
+                            onClick={() => handleDelete(despacho.id)}
+                            title="Eliminar"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Paginación */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+            />
+          </>
+        )}
+
+        {/* Loading overlay */}
+        {isLoading && despachos.length > 0 && (
+          <div className="loading-overlay">
+            <div className="spinner-small"></div>
+          </div>
+        )}
+
+        {/* Modal */}
         {showModal && (
           <div className="modal-overlay-moderna" onClick={() => setShowModal(false)}>
             <div className="modal-content-moderna" onClick={(e) => e.stopPropagation()}>

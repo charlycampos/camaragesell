@@ -1,10 +1,12 @@
 /**
- * CRUD de Salas - Diseño Moderno e Impactante 🎨
+ * CRUD de Salas - Tabla con Búsqueda y Paginación 🏢
  */
 import { useState, useEffect } from 'react';
 import { Layout } from '../layout/Layout';
 import { salaService, sedeService } from '../../services/mantenimiento.service';
 import { Sala, Sede } from '../../types';
+import { SearchBar } from '../common/SearchBar';
+import { Pagination } from '../common/Pagination';
 import './MantenimientoModerno.css';
 
 export const SalasMantenimiento = () => {
@@ -15,6 +17,14 @@ export const SalasMantenimiento = () => {
   const [editingSala, setEditingSala] = useState<Sala | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Estados de búsqueda y paginación
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedSedeId, setSelectedSedeId] = useState<string>('');
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -28,19 +38,54 @@ export const SalasMantenimiento = () => {
     loadData();
   }, []);
 
+  useEffect(() => {
+    loadSalas();
+  }, [searchTerm, currentPage, pageSize, selectedSedeId]);
+
   const loadData = async () => {
     try {
-      const [salasData, sedesData] = await Promise.all([
-        salaService.getAll(),
-        sedeService.getAll(),
-      ]);
-      setSalas(salasData);
+      const sedesData = await sedeService.getAll();
       setSedes(sedesData.filter(s => s.is_active));
     } catch (err: any) {
       setError('Error al cargar datos');
+    }
+  };
+
+  const loadSalas = async () => {
+    setIsLoading(true);
+    try {
+      const result = await salaService.searchAdvanced({
+        page: currentPage,
+        page_size: pageSize,
+        search: searchTerm || undefined,
+        sede_id: selectedSedeId ? parseInt(selectedSedeId) : undefined,
+        sort_by: 'nombre',
+        sort_order: 'asc'
+      });
+
+      setSalas(result.items);
+      setTotalItems(result.total);
+      setTotalPages(result.total_pages);
+    } catch (err: any) {
+      setError('Error al cargar salas');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSearch = (search: string) => {
+    setSearchTerm(search);
+    setCurrentPage(1);
+  };
+
+  const handleSedeFilter = (sedeId: string) => {
+    setSelectedSedeId(sedeId);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenModal = (sala?: Sala) => {
@@ -79,7 +124,7 @@ export const SalasMantenimiento = () => {
         setSuccess('✅ Sala creada exitosamente');
       }
       setShowModal(false);
-      await loadData();
+      await loadSalas();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Error al guardar sala');
@@ -92,7 +137,7 @@ export const SalasMantenimiento = () => {
     try {
       await salaService.delete(id);
       setSuccess('✅ Sala eliminada exitosamente');
-      await loadData();
+      await loadSalas();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Error al eliminar sala');
@@ -103,7 +148,7 @@ export const SalasMantenimiento = () => {
     return sedes.find(s => s.id === sedeId)?.nombre || 'N/A';
   };
 
-  if (isLoading) {
+  if (isLoading && salas.length === 0) {
     return (
       <Layout>
         <div className="loading">
@@ -116,7 +161,7 @@ export const SalasMantenimiento = () => {
   return (
     <Layout>
       <div className="mantenimiento-moderno">
-        {/* Header Impactante */}
+        {/* Header */}
         <div className="header-moderno">
           <div className="header-content">
             <h1>🏢 Gestión de Salas</h1>
@@ -138,79 +183,142 @@ export const SalasMantenimiento = () => {
           </div>
         )}
 
-        {/* Grid de Tarjetas */}
-        {salas.length === 0 ? (
-          <div className="empty-state-moderna">
-            <div className="empty-icon">🏢</div>
-            <h3>No hay salas registradas</h3>
-            <p>Comienza agregando tu primera sala</p>
-            <button className="btn-agregar" onClick={() => handleOpenModal()}>
-              ➕ Crear Primera Sala
-            </button>
+        {/* Búsqueda y Filtros */}
+        <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ flex: '1 1 300px' }}>
+            <SearchBar
+              placeholder="Buscar por nombre o equipamiento..."
+              onSearch={handleSearch}
+              initialValue={searchTerm}
+            />
           </div>
-        ) : (
-          <div className="cards-grid">
-            {salas.map((sala) => (
-              <div key={sala.id} className="card-moderna">
-                <div className="card-avatar">🏢</div>
-
-                <div className="card-header-moderna">
-                  <h3 className="card-title">{sala.nombre}</h3>
-                  <p className="card-subtitle">{getSedeName(sala.sede_id)}</p>
-                </div>
-
-                <div className="card-body-moderna">
-                  <div className="info-item">
-                    <span className="info-icon">👥</span>
-                    <div className="info-content">
-                      <span className="info-label">Capacidad</span>
-                      <span className="info-value">
-                        {sala.capacidad ? `${sala.capacidad} personas` : 'No especificada'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {sala.equipamiento && (
-                    <div className="info-item">
-                      <span className="info-icon">🔧</span>
-                      <div className="info-content">
-                        <span className="info-label">Equipamiento</span>
-                        <span className="info-value">{sala.equipamiento}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="info-item">
-                    <span className="info-icon">📍</span>
-                    <div className="info-content">
-                      <span className="info-label">Estado</span>
-                      <span className={`badge-status ${sala.is_active ? 'activo' : 'inactivo'}`}>
-                        {sala.is_active ? '✓ Activa' : '✕ Inactiva'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="card-actions">
-                  <button
-                    className="btn-icon edit"
-                    onClick={() => handleOpenModal(sala)}
-                  >
-                    ✏️ Editar
-                  </button>
-                  <button
-                    className="btn-icon delete"
-                    onClick={() => handleDelete(sala.id)}
-                  >
-                    🗑️ Eliminar
-                  </button>
-                </div>
-              </div>
+          <select
+            value={selectedSedeId}
+            onChange={(e) => handleSedeFilter(e.target.value)}
+            style={{
+              padding: '0.75rem 1rem',
+              border: '2px solid #e5e7eb',
+              borderRadius: '12px',
+              fontSize: '0.9375rem',
+              backgroundColor: 'white',
+              cursor: 'pointer',
+              minWidth: '200px'
+            }}
+          >
+            <option value="">Todas las sedes</option>
+            {sedes.map(sede => (
+              <option key={sede.id} value={sede.id}>
+                {sede.nombre}
+              </option>
             ))}
+          </select>
+        </div>
+
+        {/* Contador de resultados */}
+        {!isLoading && (
+          <div className="results-counter">
+            Mostrando {salas.length} de {totalItems} salas
           </div>
         )}
 
-        {/* Modal Moderno */}
+        {/* Tabla */}
+        {salas.length === 0 ? (
+          <div className="empty-state-moderna">
+            <div className="empty-icon">🏢</div>
+            <h3>No se encontraron salas</h3>
+            <p>{searchTerm || selectedSedeId ? 'Intenta con otros criterios de búsqueda' : 'Comienza agregando tu primera sala'}</p>
+            <button className="btn-agregar" onClick={() => handleOpenModal()}>
+              ➕ Crear Sala
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Sede</th>
+                    <th>Capacidad</th>
+                    <th>Equipamiento</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {salas.map((sala) => (
+                    <tr key={sala.id}>
+                      <td><strong>{sala.nombre}</strong></td>
+                      <td>{getSedeName(sala.sede_id)}</td>
+                      <td>
+                        {sala.capacidad ? (
+                          `${sala.capacidad} personas`
+                        ) : (
+                          <span style={{ color: '#9ca3af' }}>No especificada</span>
+                        )}
+                      </td>
+                      <td style={{ fontSize: '0.875rem', color: '#6b7280', maxWidth: '200px' }}>
+                        {sala.equipamiento ? (
+                          <span title={sala.equipamiento}>
+                            {sala.equipamiento.length > 50
+                              ? `${sala.equipamiento.substring(0, 50)}...`
+                              : sala.equipamiento}
+                          </span>
+                        ) : (
+                          <span style={{ color: '#9ca3af' }}>-</span>
+                        )}
+                      </td>
+                      <td>
+                        <span className={`badge-status ${sala.is_active ? 'activo' : 'inactivo'}`}>
+                          {sala.is_active ? '✓ Activa' : '✕ Inactiva'}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button
+                            className="btn-icon edit"
+                            onClick={() => handleOpenModal(sala)}
+                            title="Editar"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="btn-icon delete"
+                            onClick={() => handleDelete(sala.id)}
+                            title="Eliminar"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Paginación */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+            />
+          </>
+        )}
+
+        {/* Loading overlay */}
+        {isLoading && salas.length > 0 && (
+          <div className="loading-overlay">
+            <div className="spinner-small"></div>
+          </div>
+        )}
+
+        {/* Modal */}
         {showModal && (
           <div className="modal-overlay-moderna" onClick={() => setShowModal(false)}>
             <div className="modal-content-moderna" onClick={(e) => e.stopPropagation()}>

@@ -1,10 +1,12 @@
 /**
- * CRUD de Sedes - Diseño Moderno 🏛️
+ * CRUD de Sedes - Tabla con Búsqueda y Paginación 🏛️
  */
 import { useState, useEffect } from 'react';
 import { Layout } from '../layout/Layout';
 import { sedeService } from '../../services/mantenimiento.service';
 import { Sede } from '../../types';
+import { SearchBar } from '../common/SearchBar';
+import { Pagination } from '../common/Pagination';
 import './MantenimientoModerno.css';
 
 export const SedesMantenimiento = () => {
@@ -15,6 +17,13 @@ export const SedesMantenimiento = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Estados de búsqueda y paginación
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
   const [formData, setFormData] = useState({
     nombre: '',
     direccion: '',
@@ -24,17 +33,37 @@ export const SedesMantenimiento = () => {
 
   useEffect(() => {
     loadSedes();
-  }, []);
+  }, [searchTerm, currentPage, pageSize]);
 
   const loadSedes = async () => {
+    setIsLoading(true);
     try {
-      const data = await sedeService.getAll();
-      setSedes(data);
+      const result = await sedeService.searchAdvanced({
+        page: currentPage,
+        page_size: pageSize,
+        search: searchTerm || undefined,
+        sort_by: 'nombre',
+        sort_order: 'asc'
+      });
+
+      setSedes(result.items);
+      setTotalItems(result.total);
+      setTotalPages(result.total_pages);
     } catch (err: any) {
       setError('Error al cargar sedes');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSearch = (search: string) => {
+    setSearchTerm(search);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenModal = (sede?: Sede) => {
@@ -91,7 +120,7 @@ export const SedesMantenimiento = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading && sedes.length === 0) {
     return (
       <Layout>
         <div className="loading">
@@ -104,7 +133,7 @@ export const SedesMantenimiento = () => {
   return (
     <Layout>
       <div className="mantenimiento-moderno">
-        {/* Header Impactante */}
+        {/* Header */}
         <div className="header-moderno">
           <div className="header-content">
             <h1>🏛️ Gestión de Sedes</h1>
@@ -126,79 +155,110 @@ export const SedesMantenimiento = () => {
           </div>
         )}
 
-        {/* Grid de Tarjetas */}
-        {sedes.length === 0 ? (
-          <div className="empty-state-moderna">
-            <div className="empty-icon">🏛️</div>
-            <h3>No hay sedes registradas</h3>
-            <p>Comienza agregando tu primera sede</p>
-            <button className="btn-agregar" onClick={() => handleOpenModal()}>
-              ➕ Crear Primera Sede
-            </button>
-          </div>
-        ) : (
-          <div className="cards-grid">
-            {sedes.map((sede) => (
-              <div key={sede.id} className="card-moderna">
-                <div className="card-avatar">🏛️</div>
+        {/* Búsqueda */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <SearchBar
+            placeholder="Buscar por nombre, dirección o teléfono..."
+            onSearch={handleSearch}
+            initialValue={searchTerm}
+          />
+        </div>
 
-                <div className="card-header-moderna">
-                  <h3 className="card-title">{sede.nombre}</h3>
-                  <p className="card-subtitle">Instituto de Medicina Legal</p>
-                </div>
-
-                <div className="card-body-moderna">
-                  {sede.direccion && (
-                    <div className="info-item">
-                      <span className="info-icon">📍</span>
-                      <div className="info-content">
-                        <span className="info-label">Dirección</span>
-                        <span className="info-value">{sede.direccion}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {sede.telefono && (
-                    <div className="info-item">
-                      <span className="info-icon">📞</span>
-                      <div className="info-content">
-                        <span className="info-label">Teléfono</span>
-                        <span className="info-value">{sede.telefono}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="info-item">
-                    <span className="info-icon">📋</span>
-                    <div className="info-content">
-                      <span className="info-label">Estado</span>
-                      <span className={`badge-status ${sede.is_active ? 'activo' : 'inactivo'}`}>
-                        {sede.is_active ? '✓ Activa' : '✕ Inactiva'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="card-actions">
-                  <button
-                    className="btn-icon edit"
-                    onClick={() => handleOpenModal(sede)}
-                  >
-                    ✏️ Editar
-                  </button>
-                  <button
-                    className="btn-icon delete"
-                    onClick={() => handleDelete(sede.id)}
-                  >
-                    🗑️ Eliminar
-                  </button>
-                </div>
-              </div>
-            ))}
+        {/* Contador de resultados */}
+        {!isLoading && (
+          <div className="results-counter">
+            Mostrando {sedes.length} de {totalItems} sedes
           </div>
         )}
 
-        {/* Modal Moderno */}
+        {/* Tabla */}
+        {sedes.length === 0 ? (
+          <div className="empty-state-moderna">
+            <div className="empty-icon">🏛️</div>
+            <h3>No se encontraron sedes</h3>
+            <p>{searchTerm ? 'Intenta con otros criterios de búsqueda' : 'Comienza agregando tu primera sede'}</p>
+            <button className="btn-agregar" onClick={() => handleOpenModal()}>
+              ➕ Crear Sede
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Dirección</th>
+                    <th>Teléfono</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sedes.map((sede) => (
+                    <tr key={sede.id}>
+                      <td><strong>{sede.nombre}</strong></td>
+                      <td style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                        {sede.direccion || <span style={{ color: '#9ca3af' }}>-</span>}
+                      </td>
+                      <td>
+                        {sede.telefono ? (
+                          <code>{sede.telefono}</code>
+                        ) : (
+                          <span style={{ color: '#9ca3af' }}>-</span>
+                        )}
+                      </td>
+                      <td>
+                        <span className={`badge-status ${sede.is_active ? 'activo' : 'inactivo'}`}>
+                          {sede.is_active ? '✓ Activa' : '✕ Inactiva'}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button
+                            className="btn-icon edit"
+                            onClick={() => handleOpenModal(sede)}
+                            title="Editar"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="btn-icon delete"
+                            onClick={() => handleDelete(sede.id)}
+                            title="Eliminar"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Paginación */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+            />
+          </>
+        )}
+
+        {/* Loading overlay */}
+        {isLoading && sedes.length > 0 && (
+          <div className="loading-overlay">
+            <div className="spinner-small"></div>
+          </div>
+        )}
+
+        {/* Modal */}
         {showModal && (
           <div className="modal-overlay-moderna" onClick={() => setShowModal(false)}>
             <div className="modal-content-moderna" onClick={(e) => e.stopPropagation()}>
