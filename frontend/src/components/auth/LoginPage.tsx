@@ -33,7 +33,7 @@ export const LoginPage = () => {
             navigate('/dashboard/admin');
             break;
           case UserRole.ASISTENTE_ADMINISTRATIVO:
-            navigate('/dashboard/asistente');
+            navigate('/dashboard/asistente_administrativo');
             break;
           case UserRole.PERITO:
             navigate('/dashboard/perito');

@@ -6,13 +6,32 @@ import { useEffect } from 'react';
 import { useAuthStore } from './contexts/authStore';
 import { UserRole } from './types';
 
-// Pages
+// Auth
 import LoginPage from './components/auth/LoginPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+
+// Dashboards
 import DashboardAdmin from './pages/DashboardAdmin';
 import DashboardAsistente from './pages/DashboardAsistente';
 import DashboardPerito from './pages/DashboardPerito';
 import DashboardFiscal from './pages/DashboardFiscal';
+
+// Solicitudes
+import NuevaSolicitud from './components/solicitudes/NuevaSolicitud';
+import MisSolicitudes from './components/solicitudes/MisSolicitudes';
+import SolicitudesPendientes from './components/solicitudes/SolicitudesPendientes';
+
+// Programación
+import CalendarioProgramacion from './components/programacion/CalendarioProgramacion';
+
+// Agenda
+import MisCitas from './components/agenda/MisCitas';
+
+// Mantenimientos
+import SedesMantenimiento from './components/mantenimientos/SedesMantenimiento';
+
+// Reportes
+import Reportes from './components/reportes/Reportes';
 
 import './App.css';
 
@@ -29,7 +48,7 @@ function App() {
         {/* Ruta pública */}
         <Route path="/login" element={<LoginPage />} />
 
-        {/* Rutas protegidas por rol */}
+        {/* Dashboards por rol */}
         <Route
           path="/dashboard/admin"
           element={
@@ -40,7 +59,7 @@ function App() {
         />
 
         <Route
-          path="/dashboard/asistente"
+          path="/dashboard/asistente_administrativo"
           element={
             <ProtectedRoute allowedRoles={[UserRole.ASISTENTE_ADMINISTRATIVO]}>
               <DashboardAsistente />
@@ -62,6 +81,74 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={[UserRole.FISCAL]}>
               <DashboardFiscal />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Rutas de Solicitudes */}
+        <Route
+          path="/solicitudes/nueva"
+          element={
+            <ProtectedRoute allowedRoles={[UserRole.FISCAL, UserRole.ADMIN]}>
+              <NuevaSolicitud />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/solicitudes/mis-solicitudes"
+          element={
+            <ProtectedRoute allowedRoles={[UserRole.FISCAL, UserRole.ADMIN]}>
+              <MisSolicitudes />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/solicitudes/pendientes"
+          element={
+            <ProtectedRoute allowedRoles={[UserRole.ASISTENTE_ADMINISTRATIVO, UserRole.ADMIN]}>
+              <SolicitudesPendientes />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Rutas de Programación */}
+        <Route
+          path="/programacion/calendario"
+          element={
+            <ProtectedRoute allowedRoles={[UserRole.ASISTENTE_ADMINISTRATIVO, UserRole.ADMIN]}>
+              <CalendarioProgramacion />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Rutas de Agenda */}
+        <Route
+          path="/agenda/mis-citas"
+          element={
+            <ProtectedRoute allowedRoles={[UserRole.PERITO, UserRole.ADMIN]}>
+              <MisCitas />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Rutas de Mantenimientos */}
+        <Route
+          path="/mantenimientos/sedes"
+          element={
+            <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+              <SedesMantenimiento />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Rutas de Reportes */}
+        <Route
+          path="/reportes"
+          element={
+            <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.ASISTENTE_ADMINISTRATIVO]}>
+              <Reportes />
             </ProtectedRoute>
           }
         />
@@ -120,7 +207,7 @@ function DashboardRedirect() {
     case UserRole.ADMIN:
       return <Navigate to="/dashboard/admin" replace />;
     case UserRole.ASISTENTE_ADMINISTRATIVO:
-      return <Navigate to="/dashboard/asistente" replace />;
+      return <Navigate to="/dashboard/asistente_administrativo" replace />;
     case UserRole.PERITO:
       return <Navigate to="/dashboard/perito" replace />;
     case UserRole.FISCAL:
