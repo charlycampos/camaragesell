@@ -23,6 +23,7 @@ import SolicitudesPendientes from './components/solicitudes/SolicitudesPendiente
 
 // Programación
 import CalendarioProgramacion from './components/programacion/CalendarioProgramacion';
+import CalendarioAvanzado from './components/programacion/CalendarioAvanzado';
 
 // Agenda
 import MisCitas from './components/agenda/MisCitas';
@@ -123,6 +124,15 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={[UserRole.ASISTENTE_ADMINISTRATIVO, UserRole.ADMIN]}>
               <CalendarioProgramacion />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/programacion/calendario-avanzado"
+          element={
+            <ProtectedRoute allowedRoles={[UserRole.ASISTENTE_ADMINISTRATIVO, UserRole.ADMIN]}>
+              <CalendarioAvanzado />
             </ProtectedRoute>
           }
         />
