@@ -2,7 +2,7 @@
  * Servicio de Solicitudes
  */
 import api from './api';
-import { Solicitud, SolicitudCreate } from '../types';
+import { Solicitud, SolicitudCreate, SolicitudEnriched } from '../types';
 
 export const solicitudService = {
   /**
@@ -10,6 +10,16 @@ export const solicitudService = {
    */
   async getAll(skip = 0, limit = 100): Promise<Solicitud[]> {
     const response = await api.get<Solicitud[]>('/api/v1/solicitudes/', {
+      params: { skip, limit },
+    });
+    return response.data;
+  },
+
+  /**
+   * Obtiene todas las solicitudes con datos enriquecidos (nombres en lugar de IDs)
+   */
+  async getAllEnriched(skip = 0, limit = 100): Promise<SolicitudEnriched[]> {
+    const response = await api.get<SolicitudEnriched[]>('/api/v1/solicitudes/enriched', {
       params: { skip, limit },
     });
     return response.data;
@@ -24,10 +34,26 @@ export const solicitudService = {
   },
 
   /**
+   * Obtiene las solicitudes pendientes con datos enriquecidos
+   */
+  async getPendientesEnriched(): Promise<SolicitudEnriched[]> {
+    const response = await api.get<SolicitudEnriched[]>('/api/v1/solicitudes/enriched/pendientes/list');
+    return response.data;
+  },
+
+  /**
    * Obtiene una solicitud por ID
    */
   async getById(id: number): Promise<Solicitud> {
     const response = await api.get<Solicitud>(`/api/v1/solicitudes/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Obtiene una solicitud por ID con datos enriquecidos
+   */
+  async getByIdEnriched(id: number): Promise<SolicitudEnriched> {
+    const response = await api.get<SolicitudEnriched>(`/api/v1/solicitudes/enriched/${id}`);
     return response.data;
   },
 

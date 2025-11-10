@@ -158,3 +158,95 @@ export interface DocumentoCreate {
   observaciones?: string;
   programacion_id: number;
 }
+
+// ========== TIPOS ENRIQUECIDOS ==========
+
+export interface DespachoFiscalSimple {
+  id: number;
+  nombre: string;
+  distrito?: string;
+  fiscal_titular?: string;
+}
+
+export interface UsuarioSimple {
+  id: number;
+  username: string;
+  email: string;
+  full_name?: string;
+  role: UserRole;
+}
+
+export interface SalaSimple {
+  id: number;
+  nombre: string;
+  sede_nombre: string;
+  capacidad?: number;
+  equipamiento?: string;
+}
+
+export interface PeritoSimple {
+  id: number;
+  nombres: string;
+  apellidos: string;
+  nombre_completo: string;
+  especialidad?: string;
+  numero_colegiatura?: string;
+  telefono?: string;
+  email?: string;
+}
+
+export interface SedeSimple {
+  id: number;
+  nombre: string;
+  direccion?: string;
+  ciudad?: string;
+}
+
+export interface SolicitudEnriched {
+  id: number;
+  numero_caso: string;
+  tipo_diligencia: string;
+  nombre_evaluado: string;
+  edad_evaluado?: number;
+  observaciones?: string;
+  estado: EstadoSolicitud;
+  fecha_solicitud: string;
+  created_at: string;
+  updated_at?: string;
+  despacho_fiscal_id: number;
+  solicitante_id: number;
+  despacho_fiscal: DespachoFiscalSimple;
+  solicitante: UsuarioSimple;
+  tiene_programacion: boolean;
+  programacion_id?: number;
+}
+
+export interface SolicitudParaProgramacion {
+  id: number;
+  numero_caso: string;
+  tipo_diligencia: string;
+  nombre_evaluado: string;
+  edad_evaluado?: number;
+  despacho_fiscal_nombre: string;
+}
+
+export interface ProgramacionEnriched {
+  id: number;
+  fecha_hora: string;
+  duracion_minutos: number;
+  estado: EstadoProgramacion;
+  notas?: string;
+  created_at: string;
+  updated_at?: string;
+  solicitud_id: number;
+  sala_id: number;
+  perito_id: number;
+  programador_id: number;
+  solicitud: SolicitudParaProgramacion;
+  sala: SalaSimple;
+  perito: PeritoSimple;
+  programador: UsuarioSimple;
+  hora_inicio: string;
+  hora_fin: string;
+  duracion_horas: number;
+}

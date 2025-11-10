@@ -2,7 +2,7 @@
  * Servicio de Programaciones
  */
 import api from './api';
-import { Programacion, ProgramacionCreate, Documento, DocumentoCreate } from '../types';
+import { Programacion, ProgramacionCreate, ProgramacionEnriched, Documento, DocumentoCreate } from '../types';
 
 export const programacionService = {
   /**
@@ -16,10 +16,36 @@ export const programacionService = {
   },
 
   /**
+   * Obtiene todas las programaciones con datos enriquecidos
+   */
+  async getAllEnriched(skip = 0, limit = 100): Promise<ProgramacionEnriched[]> {
+    const response = await api.get<ProgramacionEnriched[]>('/api/v1/programaciones/enriched', {
+      params: { skip, limit },
+    });
+    return response.data;
+  },
+
+  /**
    * Obtiene las citas del perito actual
    */
   async getMisCitas(): Promise<Programacion[]> {
     const response = await api.get<Programacion[]>('/api/v1/programaciones/mis-citas');
+    return response.data;
+  },
+
+  /**
+   * Obtiene las citas del perito actual con datos enriquecidos
+   */
+  async getMisCitasEnriched(): Promise<ProgramacionEnriched[]> {
+    const response = await api.get<ProgramacionEnriched[]>('/api/v1/programaciones/enriched/mis-citas/list');
+    return response.data;
+  },
+
+  /**
+   * Obtiene una programación por ID con datos enriquecidos
+   */
+  async getByIdEnriched(id: number): Promise<ProgramacionEnriched> {
+    const response = await api.get<ProgramacionEnriched>(`/api/v1/programaciones/enriched/${id}`);
     return response.data;
   },
 

@@ -1,0 +1,185 @@
+/**
+ * STATUS BADGES - Diseño impactante y moderno
+ */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.3px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-transform: uppercase;
+  white-space: nowrap;
+  animation: badgeEntry 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes badgeEntry {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.status-badge:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.badge-icon {
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.badge-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* ========== TAMAÑOS ========== */
+
+.badge-small {
+  padding: 4px 12px;
+  font-size: 0.75rem;
+}
+
+.badge-small .badge-icon {
+  font-size: 0.875rem;
+}
+
+.badge-small .badge-label {
+  font-size: 0.7rem;
+}
+
+.badge-medium {
+  padding: 6px 16px;
+  font-size: 0.875rem;
+}
+
+.badge-large {
+  padding: 8px 20px;
+  font-size: 1rem;
+}
+
+.badge-large .badge-icon {
+  font-size: 1.25rem;
+}
+
+.badge-large .badge-label {
+  font-size: 0.875rem;
+}
+
+/* ========== COLORES Y VARIANTES ========== */
+
+/* Warning - Amarillo/Naranja (Pendiente, Reprogramada) */
+.badge-warning {
+  background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+}
+
+.badge-warning:hover {
+  box-shadow: 0 6px 20px rgba(243, 156, 18, 0.4);
+}
+
+/* Success - Verde (Programada, Realizada) */
+.badge-success {
+  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+}
+
+.badge-success:hover {
+  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+}
+
+/* Danger - Rojo (Rechazada, Cancelada) */
+.badge-danger {
+  background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+}
+
+.badge-danger:hover {
+  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+}
+
+/* Info - Azul (Programada - programacion) */
+.badge-info {
+  background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+}
+
+.badge-info:hover {
+  box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+}
+
+/* Gray - Gris (Cancelada) */
+.badge-gray {
+  background: linear-gradient(135deg, #7f8c8d 0%, #95a5a6 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(127, 140, 141, 0.3);
+}
+
+.badge-gray:hover {
+  box-shadow: 0 6px 20px rgba(127, 140, 141, 0.4);
+}
+
+/* Dark - Negro (No Asistió) */
+.badge-dark {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3);
+}
+
+.badge-dark:hover {
+  box-shadow: 0 6px 20px rgba(44, 62, 80, 0.4);
+}
+
+/* Default */
+.badge-default {
+  background: linear-gradient(135deg, #95a5a6 0%, #bdc3c7 100%);
+  color: #2c3e50;
+  box-shadow: 0 4px 15px rgba(149, 165, 166, 0.2);
+}
+
+.badge-default:hover {
+  box-shadow: 0 6px 20px rgba(149, 165, 166, 0.3);
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+  .status-badge {
+    padding: 5px 12px;
+    font-size: 0.75rem;
+  }
+
+  .badge-icon {
+    font-size: 0.875rem;
+  }
+
+  .badge-label {
+    font-size: 0.7rem;
+  }
+}
