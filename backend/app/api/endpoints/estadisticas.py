@@ -5,8 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select, func, and_, or_
 from typing import Dict, List, Any
 from datetime import datetime, timedelta
-from app.core.deps import get_session, get_current_user
-from app.models import (
+from ...core.database import get_session
+from ...api.deps.auth import get_current_active_user
+from ...models import (
     Solicitud, Programacion, Sala, Perito, DespachoFiscal, User,
     EstadoSolicitud, EstadoProgramacion, UserRole
 )
@@ -17,7 +18,7 @@ router = APIRouter()
 @router.get("/resumen-general", response_model=Dict[str, Any])
 async def get_resumen_general(
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Resumen general del sistema (para Admin y Asistente)
@@ -90,7 +91,7 @@ async def get_resumen_general(
 async def get_solicitudes_por_mes(
     meses: int = 6,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Solicitudes agrupadas por mes (últimos N meses)
@@ -133,7 +134,7 @@ async def get_solicitudes_por_mes(
 @router.get("/programaciones-por-perito", response_model=List[Dict[str, Any]])
 async def get_programaciones_por_perito(
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Número de programaciones por perito
@@ -174,7 +175,7 @@ async def get_programaciones_por_perito(
 @router.get("/ocupacion-salas", response_model=List[Dict[str, Any]])
 async def get_ocupacion_salas(
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Tasa de ocupación de salas
@@ -221,7 +222,7 @@ async def get_ocupacion_salas(
 @router.get("/solicitudes-por-despacho", response_model=List[Dict[str, Any]])
 async def get_solicitudes_por_despacho(
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Número de solicitudes por despacho fiscal
@@ -273,7 +274,7 @@ async def get_solicitudes_por_despacho(
 @router.get("/estadisticas-perito", response_model=Dict[str, Any])
 async def get_estadisticas_perito(
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Estadísticas del perito actual
@@ -347,7 +348,7 @@ async def get_estadisticas_perito(
 @router.get("/estadisticas-fiscal", response_model=Dict[str, Any])
 async def get_estadisticas_fiscal(
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Estadísticas del fiscal actual
