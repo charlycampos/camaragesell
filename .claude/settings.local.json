@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(./python.exe:*)",
+      "Bash(./venv/Scripts/python.exe:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(yes:*)",
+      "Bash(ping:*)",
+      "Bash(nul)",
+      "Bash(del /F /Q \"auth\\LoginPage.css\" \"layout\\Layout.css\" \"common\\SearchBar.css\" \"common\\StatusBadge.css\" \"common\\Pagination.css\" \"common\\FilterPanel.css\")",
+      "Bash(npm uninstall:*)",
+      "Bash(curl:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill /F /PID 39244)",
+      "Bash(taskkill:*)",
+      "Bash(venv/Scripts/python.exe -m uvicorn:*)",
+      "Bash(main.py)",
+      "Bash(timeout /t 3 /nobreak)",
+      "Bash(dir:*)",
+      "Bash(cat:*)",
+      "Bash(venv/Scripts/python.exe:*)",
+      "WebSearch",
+      "WebFetch(domain:www.mpfn.gob.pe)",
+      "WebFetch(domain:busquedas.elperuano.pe)",
+      "Bash(timeout 2 cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
